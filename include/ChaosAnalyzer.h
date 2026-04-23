@@ -4,6 +4,7 @@
 #include "TimeSeries.h"
 #include "MathHelper.h"
 
+#include <algorithm>
 #include <random>
 
 struct AnalysisParameters {
@@ -18,6 +19,44 @@ struct AnalysisParameters {
     bool randomize_c = true;
 }; // struct AnalysisParameters
 
+// KWithIndex class created to keep track of the position (index inside the intermediate_results vector) of K value 
+// being the final result of test01 analysis even after sorting
+// The KWithIndex::median() method was introduced since MathHelper::median() does not support such inputs
+class KWithIndex {
+public:
+    double K;
+    size_t index;
+
+    bool operator<(const KWithIndex& other) const {
+        return (K < other.K);
+    }
+
+    // Returns KWithIndex object with .K being mean value of both inputs K values
+    // but .index is set to the index of first input (since we still need to navigate
+    // inside of the intermediate_results vector). Choosing .index equal to the index
+    // of second output would also be valid
+    static KWithIndex mean(const KWithIndex& KWI1, const KWithIndex& KWI2) {
+        KWithIndex mean_result = {
+            .K = (KWI1.K + KWI2.K) / 2.0,
+            .index = KWI1.index 
+        };
+
+        return mean_result;
+    } 
+
+    static KWithIndex median(std::vector<KWithIndex> KWI_vec) {
+        std::sort(KWI_vec.begin(), KWI_vec.end());
+
+        size_t n = KWI_vec.size();
+
+        if (n % 2 == 0) {
+            return KWithIndex::mean(KWI_vec[n/2 - 1], KWI_vec[n/2]);
+        } else {
+            return KWI_vec[n/2];
+        }
+    }
+};//class KWithIndex
+
 // Test 0-1 for chaos analysis results for a single c value
 struct AnalysisControlResult {
     double c;
@@ -27,15 +66,15 @@ struct AnalysisControlResult {
     std::vector<double> Vosc;
     std::vector<double> D;
     std::vector<double> D_prime; // D_prime is the same as D but with added constant to make all entries positive
-    double K_corr;
-    double K_linreg;
+    KWithIndex KWI_corr = {0};
+    KWithIndex KWI_linreg = {0};
 }; // struct AnalysisControlResult
 
 // Final test 0-1 for chaos analysis results
 struct AnalysisResult {
-    double K_corr;      // K value(s) computed using correlation method
-    double K_linreg;    // K value(s) computed using linear regression method
-    const TimeSeries *ts_ptr; // pointer to time series for which analysis was performed
+    KWithIndex KWI_corr = {0};      // K value (with index->position in intermediate_results) computed using correlation method
+    KWithIndex KWI_linreg = {0};    // K value (with index->position in intermediate_results) computed using linear regression method
+    const TimeSeries *ts_ptr;     // pointer to time series for which analysis was performed
     std::vector<AnalysisControlResult> intermediate_results;
 }; // struct AnalysisResult
 

@@ -50,9 +50,9 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries *ts, size_t mode) {
     ares.ts_ptr = ts; // assigning time series pointer to be visible from AnalysisResult class object
     c_counter = 0;
 
-    // Vector to store only Kvalues used to later calculate final result by calling MathHelper::median()
-    std::vector<double> Kvals;
-    Kvals.resize(apar.c_num);
+    // Vector to store only KWI (KWithIndex) objects used to later calculate final result by calling MathHelper::median()
+    std::vector<KWithIndex> KWI_vec;
+    KWI_vec.resize(apar.c_num);
 
     for(size_t i=0; i<apar.c_num; i++) {
         AnalysisControlResult acor;
@@ -81,10 +81,11 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries *ts, size_t mode) {
             }
             acor.M[n] = sum / j_max;
         }
-        Kvals[i] = corrMethod(acor, mode);
+        KWI_vec[i].index = i;
+        KWI_vec[i].K = corrMethod(acor, mode);
         ares.intermediate_results[i] = std::move(acor);
     }
-    ares.K_corr = MathHelper::median(Kvals);
+    ares.KWI_corr = KWithIndex::median(KWI_vec);
     
     return ares;
 }// ChaosAnalyzer::run()
@@ -102,8 +103,8 @@ double ChaosAnalyzer::corrMethod(AnalysisControlResult &acor, size_t mode) {
     const std::vector<double>& Delta =
         (mode == 0) ? acor.M : acor.D;
 
-    acor.K_corr = MathHelper::corr(ksi, Delta);
-    return acor.K_corr;
+    double K = MathHelper::corr(ksi, Delta);
+    return K;
 }//ChaosAnalyzer::corrMethod()
 
 
