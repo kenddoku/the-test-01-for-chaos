@@ -9,7 +9,8 @@
 struct AnalysisParameters {
     size_t N;
     size_t N0;
-    // NOTE: still thinking about making multi-time-series analysis possible but seems like overkill right now
+    // NOTE: still thinking about making multi-time-series analysis possible but seems like
+    // overkill right now
     // size_t ts_num = 1; // number of time series data on which analysis shall be performed
     size_t c_num = 11; // number of c values used for analysis
     double c_min = 0.0;
@@ -34,7 +35,7 @@ struct AnalysisControlResult {
 struct AnalysisResult {
     double K_corr;      // K value(s) computed using correlation method
     double K_linreg;    // K value(s) computed using linear regression method
-
+    const TimeSeries *ts_ptr; // pointer to time series for which analysis was performed
     std::vector<AnalysisControlResult> intermediate_results;
 }; // struct AnalysisResult
 
@@ -46,7 +47,7 @@ public:
 
     double generateC();
 
-    AnalysisResult run(const TimeSeries &ts, size_t mode = 0);
+    AnalysisResult run(const TimeSeries *ts, size_t mode = 0);
 
     double corrMethod(AnalysisControlResult &acor, size_t mode = 0);
 

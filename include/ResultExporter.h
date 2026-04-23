@@ -9,16 +9,17 @@ class ResultExporter {
 private:
     std::string base_path = ProjectPaths::chaos01_out_path;
 public:
+    std::vector<const AnalysisResult*> ares_ptr_vec;
+    size_t tseries_num = 0;
 
-    static void saveM(const AnalysisControlResult& acor,
-                    const std::string& filename);
+    void add_result(const AnalysisResult*);
+    
+    void saveM(const std::string& filename);
+                    
+    void savePQ(const std::string& filename);            
 
-    static void savePQ(const AnalysisControlResult& acor,
-                    const std::string& filename);
-
-    static void saveEveryK(const AnalysisResult& ares,
-                    const std::string& filename);
-
+    void saveEveryK(const std::string& filename);
+                    
     // static void saveK(const AnalysisResult& ares,
     //                 const std::string& filename);
 

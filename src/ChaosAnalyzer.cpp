@@ -1,6 +1,7 @@
 #include "ChaosAnalyzer.h"
 
 #include <fstream>
+#include <stdexcept>
 
 // ===== TimeSeries definitions =====
 size_t TimeSeries::len() const {
@@ -33,25 +34,39 @@ double ChaosAnalyzer::generateC() {
 
 
 // Method performing final computation of intermediate results and K parameter values
-AnalysisResult ChaosAnalyzer::run(const TimeSeries &ts, size_t mode) {
-    AnalysisResult ares;
+AnalysisResult ChaosAnalyzer::run(const TimeSeries *ts, size_t mode) {
     
-    AnalysisControlResult acor;
-    std::vector<AnalysisControlResult> intermediate_results; // where all runs are stored
-    intermediate_results.reserve(apar.c_num);
+    if (ts == nullptr) {
+        throw std::invalid_argument("ERROR: Time series pointer is a nullptr");
+    }
+    if (ts->len() != apar.N) {
+        throw std::invalid_argument("ERROR: Time series length doesn't match the N size in AnalysisParameters");
+    }
 
-    acor.p.resize(apar.N);
-    acor.q.resize(apar.N);
-    acor.M.resize(apar.N0);
+    // Resizing intermediate_results to store all control results in final result
+    AnalysisResult ares;
+    ares.intermediate_results.resize(apar.c_num);
+    
+    ares.ts_ptr = ts; // assigning time series pointer to be visible from AnalysisResult class object
+    c_counter = 0;
+
+    // Vector to store only Kvalues used to later calculate final result by calling MathHelper::median()
+    std::vector<double> Kvals;
+    Kvals.resize(apar.c_num);
 
     for(size_t i=0; i<apar.c_num; i++) {
+        AnalysisControlResult acor;
+        acor.p.resize(apar.N);
+        acor.q.resize(apar.N);
+        acor.M.resize(apar.N0);
+
         double c = generateC();
         acor.c = c;
-        acor.p[0] = ts.data[0] * std::cos(c);
-        acor.q[0] = ts.data[0] * std::sin(c);
+        acor.p[0] = ts->data[0] * std::cos(c);
+        acor.q[0] = ts->data[0] * std::sin(c);
         for(size_t j=1; j<apar.N; j++) {
-            acor.p[j] = acor.p[j-1] + ts.data[j] * std::cos((j+1)*c);
-            acor.q[j] = acor.q[j-1] + ts.data[j] * std::sin((j+1)*c);
+            acor.p[j] = acor.p[j-1] + ts->data[j] * std::cos((j+1)*c);
+            acor.q[j] = acor.q[j-1] + ts->data[j] * std::sin((j+1)*c);
         }
 
         for(size_t n=0; n<apar.N0; n++) {
@@ -66,10 +81,10 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries &ts, size_t mode) {
             }
             acor.M[n] = sum / j_max;
         }
-        corrMethod(acor, mode);
-        intermediate_results.push_back(acor);
+        Kvals[i] = corrMethod(acor, mode);
+        ares.intermediate_results[i] = std::move(acor);
     }
-    ares.intermediate_results = std::move(intermediate_results);
+    ares.K_corr = MathHelper::median(Kvals);
     
     return ares;
 }// ChaosAnalyzer::run()
