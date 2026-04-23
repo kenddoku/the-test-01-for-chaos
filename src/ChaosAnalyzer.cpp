@@ -11,9 +11,9 @@ size_t TimeSeries::len() const {
 // ===== Analyzer definitions =====
 // !!!!! consider making AnalysisParameters an attribute of ChaosAnalyzer since it makes more sense
 // to pass it once upon creation of ChaosAnalyzer instance
-ChaosAnalyzer::ChaosAnalyzer(unsigned int seed) : rng(seed) {}
+ChaosAnalyzer::ChaosAnalyzer(const AnalysisParameters& apar_, unsigned int seed) : apar(apar_), rng(seed) {}
 
-double ChaosAnalyzer::generateC(const AnalysisParameters &apar) {
+double ChaosAnalyzer::generateC() {
     if( apar.randomize_c ) {
         std::uniform_real_distribution<double> dist(apar.c_min, apar.c_max);
         double c = dist(rng);
@@ -33,7 +33,7 @@ double ChaosAnalyzer::generateC(const AnalysisParameters &apar) {
 
 
 // Method performing final computation of intermediate results and K parameter values
-AnalysisResult ChaosAnalyzer::run(const TimeSeries &ts, const AnalysisParameters &apar) {
+AnalysisResult ChaosAnalyzer::run(const TimeSeries &ts, size_t mode) {
     AnalysisResult ares;
     
     AnalysisControlResult acor;
@@ -45,7 +45,7 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries &ts, const AnalysisParameters
     acor.M.resize(apar.N0);
 
     for(size_t i=0; i<apar.c_num; i++) {
-        double c = generateC(apar);
+        double c = generateC();
         acor.c = c;
         acor.p[0] = ts.data[0] * std::cos(c);
         acor.q[0] = ts.data[0] * std::sin(c);
@@ -66,7 +66,7 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries &ts, const AnalysisParameters
             }
             acor.M[n] = sum / j_max;
         }
-        corrMethod(acor, 0);
+        corrMethod(acor, mode);
         intermediate_results.push_back(acor);
     }
     ares.intermediate_results = std::move(intermediate_results);

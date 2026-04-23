@@ -9,6 +9,8 @@
 struct AnalysisParameters {
     size_t N;
     size_t N0;
+    // NOTE: still thinking about making multi-time-series analysis possible but seems like overkill right now
+    // size_t ts_num = 1; // number of time series data on which analysis shall be performed
     size_t c_num = 11; // number of c values used for analysis
     double c_min = 0.0;
     double c_max = 2*MathHelper::pi;
@@ -30,24 +32,26 @@ struct AnalysisControlResult {
 
 // Final test 0-1 for chaos analysis results
 struct AnalysisResult {
-    double K_corr;      // K value computed using correlation method
-    double K_linreg;    // K value computed using linear regression method
+    double K_corr;      // K value(s) computed using correlation method
+    double K_linreg;    // K value(s) computed using linear regression method
 
     std::vector<AnalysisControlResult> intermediate_results;
 }; // struct AnalysisResult
 
 class ChaosAnalyzer {
 public:
-    explicit ChaosAnalyzer(unsigned int seed = std::random_device{}());
+    AnalysisParameters apar;
 
-    double generateC(const AnalysisParameters &apar);
+    explicit ChaosAnalyzer(const AnalysisParameters& apar_, unsigned int seed = std::random_device{}());
 
-    AnalysisResult run(const TimeSeries &ts, const AnalysisParameters &apar);
+    double generateC();
+
+    AnalysisResult run(const TimeSeries &ts, size_t mode = 0);
 
     double corrMethod(AnalysisControlResult &acor, size_t mode = 0);
 
 private:
-    std::mt19937 rng;
+    std::mt19937 rng;   // rng engine
     size_t c_counter = 0;
     std::vector<double> ksi;
 }; // class ChaosAnalyzer
