@@ -6,8 +6,8 @@
 
 // Struct designed to store a single time series data
 struct TimeSeries {
-    int         nu;
-    int         cp_val; // control parameter value
+    int         nu_int;
+    int         cp_val_int; // control parameter value
     std::string cp_name;// control parameter name
     
     std::vector<double> data;

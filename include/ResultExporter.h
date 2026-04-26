@@ -13,12 +13,14 @@ public:
     size_t tseries_num = 0;
 
     void add_result(const AnalysisResult*);
-    
-    void saveM(const std::string& filename);
-                    
-    void savePQ(const std::string& filename);            
 
-    void saveEveryK(const std::string& filename);
+    void saveK();
+    
+    void saveM();
+                    
+    void savePQ();            
+
+    void saveEveryK();
                     
     // static void saveK(const AnalysisResult& ares,
     //                 const std::string& filename);

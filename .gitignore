@@ -4,3 +4,4 @@ build/
 *.exe
 examples/
 playground/
+.vscode/

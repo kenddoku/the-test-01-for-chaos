@@ -10,8 +10,6 @@ size_t TimeSeries::len() const {
 
 
 // ===== Analyzer definitions =====
-// !!!!! consider making AnalysisParameters an attribute of ChaosAnalyzer since it makes more sense
-// to pass it once upon creation of ChaosAnalyzer instance
 ChaosAnalyzer::ChaosAnalyzer(const AnalysisParameters& apar_, unsigned int seed) : apar(apar_), rng(seed) {}
 
 double ChaosAnalyzer::generateC() {
@@ -92,7 +90,7 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries *ts, size_t mode) {
 
 
 double ChaosAnalyzer::corrMethod(AnalysisControlResult &acor, size_t mode) {
-    // filling ksi vector only once after first c value is being considered
+    // filling ksi vector only once when first c value is being considered
     if(c_counter == 1) {
         ksi.resize(acor.M.size());
         for(size_t i=0; i<acor.M.size(); i++) {
@@ -100,8 +98,7 @@ double ChaosAnalyzer::corrMethod(AnalysisControlResult &acor, size_t mode) {
         }
     }
     
-    const std::vector<double>& Delta =
-        (mode == 0) ? acor.M : acor.D;
+    const std::vector<double>& Delta = acor.M;
 
     double K = MathHelper::corr(ksi, Delta);
     return K;

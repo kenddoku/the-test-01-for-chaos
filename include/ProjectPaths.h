@@ -4,7 +4,7 @@
 #include <string>
 
 namespace ProjectPaths {
-    const std::string project_path = "/net/pr2/projects/plgrid/plgghopfieldmgr/Masters";
+    const std::string project_path = ".";
 
     const std::string data_path = project_path + "/data";
 
