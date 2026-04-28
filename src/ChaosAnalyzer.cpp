@@ -79,8 +79,9 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries *ts, size_t mode) {
             }
             acor.M[n] = sum / j_max;
         }
-        KWI_vec[i].index = i;
-        KWI_vec[i].K = corrMethod(acor, mode);
+        acor.KWI_corr.index = i;
+        acor.KWI_corr.K = corrMethod(acor, mode);
+        KWI_vec[i] = acor.KWI_corr;
         ares.intermediate_results[i] = std::move(acor);
     }
     ares.KWI_corr = KWithIndex::median(KWI_vec);

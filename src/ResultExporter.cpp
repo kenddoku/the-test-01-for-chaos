@@ -8,10 +8,21 @@
 
 namespace fs = std::filesystem;
 
+// ****** ParamereStorage constructor ******
+ParameterStorage::ParameterStorage(const AnalysisResult* ares_) {
+    nu_int      = ares_->ts_ptr->nu_int;
+    cp_val_int  = ares_->ts_ptr->cp_val_int;
+    cp_name     = ares_->ts_ptr->cp_name;
+    c_num       = ares_->intermediate_results.size();
+}
+
+// ****** ResultExporter constructor ******
+ResultExporter::ResultExporter() : params(nullptr) {}
+
 void ResultExporter::add_result(const AnalysisResult* ares) {
     ares_ptr_vec.push_back(ares);
     tseries_num++;
-}
+}//ResultExporter::add_result()
 
 void ResultExporter::saveK() {
     if(tseries_num == 0) {
@@ -20,20 +31,17 @@ void ResultExporter::saveK() {
     }
     // Code below assumes every time series has the same values of nu_int, cp_val and cp_name
     // Otherwise the behaviour is not valid
-    int nu_int          = ares_ptr_vec[0]->ts_ptr->nu_int;
-    int cp_val_int      = ares_ptr_vec[0]->ts_ptr->cp_val_int;
-    std::string cp_name = ares_ptr_vec[0]->ts_ptr->cp_name;
+    ParameterStorage params(ares_ptr_vec[0]);
     std::ostringstream oss;
-    oss << base_path << "/K/" << cp_name << "/nu_" << nu_int;  
+    oss << base_path << "/K/" << params.cp_name << "/nu_" << params.nu_int;  
     fs::path K_out_dir = oss.str();
 
     if(!fs::exists(K_out_dir)) {
         fs::create_directories(K_out_dir);
     }
 
-    oss << "/" << cp_name << "_" << cp_val_int << ".txt";
+    oss << "/K_" << params.cp_name << "_" << params.cp_val_int << ".txt";
     fs::path K_out_path = oss.str();
-
     std::ofstream file(K_out_path);
 
     for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
@@ -45,7 +53,37 @@ void ResultExporter::saveK() {
     }
 
     file.close();
-}
+}//ResultExporter::saveK()
+
+void ResultExporter::saveAllKc() {
+    if(tseries_num == 0) {
+        std::cerr << "ERROR: saveAllKc(), No results to save (tseries_num == 0)" << std::endl;
+        return;
+    }
+
+    ParameterStorage params(ares_ptr_vec[0]);
+    std::ostringstream oss;
+    oss << base_path << "/AllKc/" << params.cp_name << "/nu_" << params.nu_int;
+    fs::path allKcDir = oss.str();
+
+    if(!fs::exists(allKcDir)) {
+        fs::create_directories(allKcDir);
+    }
+
+    oss << "/AllKc_" << params.cp_name << "_" << params.cp_val_int << ".txt";
+    fs::path AllKc_out_path = oss.str();
+    std::ofstream file(AllKc_out_path);
+
+    for(size_t c_index=0; c_index<params.c_num; c_index++) {
+        for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
+            double c        = ares_ptr_vec[ts_index]->intermediate_results[c_index].c;
+            double Kc_corr  = ares_ptr_vec[ts_index]->intermediate_results[c_index].KWI_corr.K;
+
+            file << std::fixed << std::setprecision(6) << c << " " << Kc_corr << " ";
+        }
+        file << '\n';
+    }
+}// ResultExporter::saveEveryK()
 
 void ResultExporter::saveM() {
     // std::ofstream file(filename);
@@ -78,13 +116,3 @@ void ResultExporter::savePQ() {
         file << acor.p[i] << " " << acor.q[i] << '\n';
     } */
 }//ResultExporter::savePQ()
-
-void ResultExporter::saveEveryK() {
-    //std::ofstream file(filename);
-/*  SAME PROBLEM AS ABOVE....
-    size_t N = ares.intermediate_results.size();
-    for(size_t i=0; i<N; i++) {
-        file << ares.intermediate_results[i].c << " "
-            << ares.intermediate_results[i].K_corr << "\n";
-    } */
-}// ResultExporter::saveEveryK()
