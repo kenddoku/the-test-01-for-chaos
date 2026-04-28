@@ -129,7 +129,8 @@ void ResultExporter::saveM() {
     // Saving the results to a file
     for(size_t i=0; i<M_size; i++) {
         for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
-            file << *(M_corr_ptrs[ts_index] + i) << " ";
+            file << std::fixed << std::setprecision(6)
+                << *(M_corr_ptrs[ts_index] + i) << " " << *(M_linreg_ptrs[ts_index] + i) << " ";
         }
         file << '\n';
     }
@@ -137,10 +138,53 @@ void ResultExporter::saveM() {
 }//ResultExporter::saveM()
 
 void ResultExporter::savePQ() {
-    //std::ofstream file(filename);
-/*  SAME PROBLEM AS ABOVE in saveM method
-    size_t N = acor.p.size();
-    for(size_t i=0; i<N; i++) {
-        file << acor.p[i] << " " << acor.q[i] << '\n';
-    } */
+    if(tseries_num == 0) {
+        std::cerr << "ERROR: savePQ(), No results to save (tseries_num == 0)" << std::endl;
+        return;
+    }
+    
+    ParameterStorage params(ares_ptr_vec[0]);
+    std::ostringstream oss;
+    oss << base_path << "/pq/" << params.cp_name << "/nu_" << params.nu_int;
+    fs::path pqDir = oss.str();
+
+    if(!fs::exists(pqDir)) {
+        fs::create_directories(pqDir);
+    }
+
+    oss << "/pq_" << params.cp_name << "_" << params.cp_val_int << ".txt";
+    fs::path pq_out_path = oss.str();
+    std::ofstream file(pq_out_path);
+
+    // Collecting pointers to p/q vectors (first elements) for every time series so that saving the data
+    // in colums is made possible without copying original p/q vectors
+    std::vector<const double*> p_corr_ptrs;
+    std::vector<const double*> p_linreg_ptrs;
+    std::vector<const double*> q_corr_ptrs;
+    std::vector<const double*> q_linreg_ptrs;
+    const size_t pq_size = ares_ptr_vec[0]->intermediate_results[0].p.size(); // All p/q vectors have the same size
+
+    for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
+        size_t K_corr_index = ares_ptr_vec[ts_index]->KWI_corr.index;
+        const double* p_corr_ptr = &( ares_ptr_vec[ts_index]->intermediate_results[K_corr_index].p[0] );
+        const double* q_corr_ptr = &( ares_ptr_vec[ts_index]->intermediate_results[K_corr_index].q[0] );
+        p_corr_ptrs.push_back(p_corr_ptr);
+        q_corr_ptrs.push_back(q_corr_ptr);
+
+        size_t K_linreg_index = ares_ptr_vec[ts_index]->KWI_linreg.index;
+        const double* p_linreg_ptr = &( ares_ptr_vec[ts_index]->intermediate_results[K_linreg_index].p[0] );
+        const double* q_linreg_ptr = &( ares_ptr_vec[ts_index]->intermediate_results[K_linreg_index].q[0] );
+        p_linreg_ptrs.push_back(p_linreg_ptr);
+        q_linreg_ptrs.push_back(q_linreg_ptr);
+    }
+
+    // Saving the results to a file
+    for(size_t i=0; i<pq_size; i++) {
+        for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
+            file << std::fixed << std::setprecision(6)
+                << *(p_corr_ptrs[ts_index] + i) << " " << *(q_corr_ptrs[ts_index] + i) << " "
+                << *(p_linreg_ptrs[ts_index] + i) << " " << *(q_linreg_ptrs[ts_index] + i) << " ";
+        }
+        file << '\n';
+    }
 }//ResultExporter::savePQ()
