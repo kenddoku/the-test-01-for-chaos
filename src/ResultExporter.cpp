@@ -45,11 +45,16 @@ void ResultExporter::saveK() {
     std::ofstream file(K_out_path);
 
     for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
-        KWithIndex KWI_corr = ares_ptr_vec[ts_index]->KWI_corr;
-        size_t K_index = KWI_corr.index;
-        double c = ares_ptr_vec[ts_index]->intermediate_results[K_index].c;
+        KWithIndex KWI_corr     = ares_ptr_vec[ts_index]->KWI_corr;
+        KWithIndex KWI_linreg   = ares_ptr_vec[ts_index]->KWI_linreg;
+        size_t K_corr_index     = KWI_corr.index;
+        size_t K_linreg_index   = KWI_linreg.index;
+        double c_corr   = ares_ptr_vec[ts_index]->intermediate_results[K_corr_index].c;
+        double c_linreg = ares_ptr_vec[ts_index]->intermediate_results[K_linreg_index].c;
 
-        file << std::fixed << std::setprecision(6) << c << " " << KWI_corr.K << " ";
+        file << std::fixed << std::setprecision(6) 
+            << c_corr << " " << KWI_corr.K << " "
+            << c_linreg << " " << KWI_linreg.K << " ";
     }
 
     file.close();
@@ -76,36 +81,59 @@ void ResultExporter::saveAllKc() {
 
     for(size_t c_index=0; c_index<params.c_num; c_index++) {
         for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
-            double c        = ares_ptr_vec[ts_index]->intermediate_results[c_index].c;
+            double c   = ares_ptr_vec[ts_index]->intermediate_results[c_index].c; // Shared c since we save all of these results
             double Kc_corr  = ares_ptr_vec[ts_index]->intermediate_results[c_index].KWI_corr.K;
+            double Kc_linreg = ares_ptr_vec[ts_index]->intermediate_results[c_index].KWI_linreg.K;
 
-            file << std::fixed << std::setprecision(6) << c << " " << Kc_corr << " ";
+            file << std::fixed << std::setprecision(6) << c << " " << Kc_corr << " " << Kc_linreg << " ";
         }
         file << '\n';
     }
 }// ResultExporter::saveEveryK()
 
 void ResultExporter::saveM() {
-    // std::ofstream file(filename);
-
-    // if(!file) {
-    //     std::cerr << "ERROR: could not open " << filename << std::endl;
-    //     return;
-    // }
-
-    for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
-        /* PROBLEM: need to know for which intermediate_result to save M values
-           POSSIBLE FIX: when finding final K value via median() method figure out 
-           the index that's associated with this particular value 
-         */
-/*         size_t N0 = ares.M.size(); <---- currently commented so program does not break
-        for(size_t i=0; i<N0; i++) {
-            file << acor.M[i] << '\n';
-        } */
-       const TimeSeries* ts_local_ptr = ares_ptr_vec[ts_index]->ts_ptr;  
-       std::cout << "TimeSeries ("<<ts_index<<") | nu : " << ts_local_ptr->nu_int << '\n';
+    if(tseries_num == 0) {
+        std::cerr << "ERROR: saveM(), No results to save (tseries_num == 0)" << std::endl;
+        return;
     }
     
+    ParameterStorage params(ares_ptr_vec[0]);
+    std::ostringstream oss;
+    oss << base_path << "/M/" << params.cp_name << "/nu_" << params.nu_int;
+    fs::path MDir = oss.str();
+
+    if(!fs::exists(MDir)) {
+        fs::create_directories(MDir);
+    }
+
+    oss << "/M_" << params.cp_name << "_" << params.cp_val_int << ".txt";
+    fs::path M_out_path = oss.str();
+    std::ofstream file(M_out_path);
+
+    // Collecting pointers to M vectors for every time series so that saving the data
+    // in colums is made possible without copying original M vectors
+    std::vector<const double*> M_corr_ptrs;
+    std::vector<const double*> M_linreg_ptrs;
+    const size_t M_size = ares_ptr_vec[0]->intermediate_results[0].M.size(); // Every M vector has the same size determined by AnalysisParameters
+
+    for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
+        size_t K_corr_index         = ares_ptr_vec[ts_index]->KWI_corr.index;
+        const double *M_corr_ptr    = &( ares_ptr_vec[ts_index]->intermediate_results[K_corr_index].M[0] );
+        M_corr_ptrs.push_back(M_corr_ptr);
+
+        size_t K_linreg_index       = ares_ptr_vec[ts_index]->KWI_linreg.index;
+        const double *M_linreg_ptr  = &( ares_ptr_vec[ts_index]->intermediate_results[K_linreg_index].M[0] );
+        M_linreg_ptrs.push_back(M_linreg_ptr);
+    }
+
+    // Saving the results to a file
+    for(size_t i=0; i<M_size; i++) {
+        for(size_t ts_index=0; ts_index<tseries_num; ts_index++) {
+            file << *(M_corr_ptrs[ts_index] + i) << " ";
+        }
+        file << '\n';
+    }
+
 }//ResultExporter::saveM()
 
 void ResultExporter::savePQ() {

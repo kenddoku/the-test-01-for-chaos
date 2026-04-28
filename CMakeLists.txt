@@ -18,6 +18,8 @@ target_include_directories(chaos_lib PUBLIC include)
 
 #create executable
 add_executable(logistic_map examples/logistic_map.cpp)
+add_executable(dummy_period_chaos examples/dummy_period_chaos.cpp)
 
 #link library to executable
 target_link_libraries(logistic_map chaos_lib)
+target_link_libraries(dummy_period_chaos chaos_lib)
