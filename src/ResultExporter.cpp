@@ -89,7 +89,7 @@ void ResultExporter::saveAllKc() {
         }
         file << '\n';
     }
-}// ResultExporter::saveEveryK()
+}// ResultExporter::saveAllKc()
 
 void ResultExporter::saveM() {
     if(tseries_num == 0) {
