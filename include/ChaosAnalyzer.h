@@ -51,6 +51,8 @@ public:
 
     double corrMethod(AnalysisControlResult &acor, size_t mode = 0);
 
+    double linregMethod(AnalysisControlResult &acor, size_t mode = 0);
+
 private:
     std::mt19937 rng;   // rng engine
     size_t c_counter = 0;

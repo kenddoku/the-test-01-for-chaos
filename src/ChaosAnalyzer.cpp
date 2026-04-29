@@ -1,7 +1,9 @@
 #include "ChaosAnalyzer.h"
+#include "LinearRegression.h"
 
 #include <fstream>
 #include <stdexcept>
+#include <cmath>
 
 // ===== TimeSeries definitions =====
 size_t TimeSeries::len() const {
@@ -49,8 +51,11 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries *ts, size_t mode) {
     c_counter = 0;
 
     // Vector to store only KWI (KWithIndex) objects used to later calculate final result by calling MathHelper::median()
-    std::vector<KWithIndex> KWI_vec;
-    KWI_vec.resize(apar.c_num);
+    std::vector<KWithIndex> KWI_corr_vec;
+    KWI_corr_vec.resize(apar.c_num);
+
+    std::vector<KWithIndex> KWI_linreg_vec;
+    KWI_linreg_vec.resize(apar.c_num);
 
     for(size_t i=0; i<apar.c_num; i++) {
         AnalysisControlResult acor;
@@ -81,10 +86,16 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries *ts, size_t mode) {
         }
         acor.KWI_corr.index = i;
         acor.KWI_corr.K = corrMethod(acor, mode);
-        KWI_vec[i] = acor.KWI_corr;
+        KWI_corr_vec[i] = acor.KWI_corr;
+
+        acor.KWI_linreg.index = i;
+        acor.KWI_linreg.K = linregMethod(acor, mode);
+        KWI_linreg_vec[i] = acor.KWI_linreg;
+
         ares.intermediate_results[i] = std::move(acor);
     }
-    ares.KWI_corr = KWithIndex::median(KWI_vec);
+    ares.KWI_corr = KWithIndex::median(KWI_corr_vec);
+    ares.KWI_linreg = KWithIndex::median(KWI_linreg_vec);
     
     return ares;
 }// ChaosAnalyzer::run()
@@ -104,5 +115,30 @@ double ChaosAnalyzer::corrMethod(AnalysisControlResult &acor, size_t mode) {
     double K = MathHelper::corr(ksi, Delta);
     return K;
 }//ChaosAnalyzer::corrMethod()
+
+double ChaosAnalyzer::linregMethod(AnalysisControlResult &acor, size_t mode) {
+    if(c_counter == 1) {
+        ksi.resize(acor.M.size());
+        for(size_t i=0; i<acor.M.size(); i++) {
+            ksi[i] = i+1;
+        }
+    }
+
+    std::vector<double> M_log(acor.M.size());
+    std::vector<double> ksi_log(ksi.size());
+
+    for(size_t i=0; i<M_log.size(); i++) {
+        // Safeguard since first value of M is equal to zero
+        if(acor.M[i] < 1E-6)
+            M_log[i] = std::log10(1E-6);
+        else
+            M_log[i] = std::log10(acor.M[i]);
+        ksi_log[i] = std::log10(ksi[i]);
+    }
+
+    linreg_result_t result = huber_irls_linreg(ksi_log, M_log);
+
+    return result.beta1;
+}
 
 
