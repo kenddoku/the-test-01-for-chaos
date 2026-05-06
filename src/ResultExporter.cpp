@@ -10,6 +10,8 @@ namespace fs = std::filesystem;
 
 // ****** ParamereStorage constructor ******
 ParameterStorage::ParameterStorage(const AnalysisResult* ares_) {
+    N           = ares_->N;
+    N0          = ares_->N0;
     nu_int      = ares_->ts_ptr->nu_int;
     cp_val_int  = ares_->ts_ptr->cp_val_int;
     cp_name     = ares_->ts_ptr->cp_name;
@@ -40,7 +42,8 @@ void ResultExporter::saveK() {
         fs::create_directories(K_out_dir);
     }
 
-    oss << "/K_" << params.cp_name << "_" << params.cp_val_int << ".txt";
+    oss << "/K_" << params.cp_name << "_" << params.cp_val_int << "_N_"
+        << params.N << "_N0_" << params.N0 << ".txt";
     fs::path K_out_path = oss.str();
     std::ofstream file(K_out_path);
 
@@ -75,7 +78,8 @@ void ResultExporter::saveAllKc() {
         fs::create_directories(allKcDir);
     }
 
-    oss << "/AllKc_" << params.cp_name << "_" << params.cp_val_int << ".txt";
+    oss << "/AllKc_" << params.cp_name << "_" << params.cp_val_int
+        << "_N_" << params.N << "_N0_" << params.N0 << ".txt";
     fs::path AllKc_out_path = oss.str();
     std::ofstream file(AllKc_out_path);
 
@@ -106,7 +110,8 @@ void ResultExporter::saveM() {
         fs::create_directories(MDir);
     }
 
-    oss << "/M_" << params.cp_name << "_" << params.cp_val_int << ".txt";
+    oss << "/M_" << params.cp_name << "_" << params.cp_val_int
+        << "_N_" << params.N << "_N0_" << params.N0 << ".txt";
     fs::path M_out_path = oss.str();
     std::ofstream file(M_out_path);
 
@@ -152,7 +157,8 @@ void ResultExporter::savePQ() {
         fs::create_directories(pqDir);
     }
 
-    oss << "/pq_" << params.cp_name << "_" << params.cp_val_int << ".txt";
+    oss << "/pq_" << params.cp_name << "_" << params.cp_val_int
+        << "_N_" << params.N << "_N0_" << params.N0 << ".txt";
     fs::path pq_out_path = oss.str();
     std::ofstream file(pq_out_path);
 

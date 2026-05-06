@@ -43,8 +43,13 @@ AnalysisResult ChaosAnalyzer::run(const TimeSeries *ts, size_t mode) {
         throw std::invalid_argument("ERROR: Time series length doesn't match the N size in AnalysisParameters");
     }
 
-    // Resizing intermediate_results to store all control results in final result
+    // Creating an object of class AnalysisResult that will store all the results
     AnalysisResult ares;
+    // Assigning appropriate N/N0 values to ares so that the ares object gets full information
+    ares.N = apar.N;
+    ares.N0 = apar.N0;
+
+    // Resizing intermediate_results to store all control results in final result
     ares.intermediate_results.resize(apar.c_num);
     
     ares.ts_ptr = ts; // assigning time series pointer to be visible from AnalysisResult class object

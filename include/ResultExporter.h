@@ -12,6 +12,8 @@
 ///             time series number
 class ParameterStorage {
 public:
+    size_t      N;
+    size_t      N0;
     int         nu_int;
     int         cp_val_int;
     std::string cp_name;
@@ -31,6 +33,13 @@ public:
 
     void add_result(const AnalysisResult*);
 
+    // SaveK() method saves the resulting K parameters (calculated using both correlation and regression method)
+    // for every time series in a single file. File name's format is 'K_<cp_name>_<cp_val>_<cp_val_int>_N_<N>_N0_<N0>.txt'
+    // and the data is stored in format shown below
+    //
+    // <c_corr0> <K_corr0> <c_linreg0> <K_linreg0> <c_corr1> <K_corr1> <c_linreg1> <K_linreg1> [...]
+    //
+    // where the indices are associated with time series indices
     void saveK();
     
     void saveAllKc();
@@ -38,11 +47,6 @@ public:
     void saveM();
                     
     void savePQ();            
-
-                    
-    // static void saveK(const AnalysisResult& ares,
-    //                 const std::string& filename);
-
 };
 
 #endif

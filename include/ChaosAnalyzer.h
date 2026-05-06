@@ -33,8 +33,10 @@ struct AnalysisControlResult {
 
 // Final test 0-1 for chaos analysis results
 struct AnalysisResult {
-    KWithIndex KWI_corr = {0};      // K value (with index->position in intermediate_results) computed using correlation method
-    KWithIndex KWI_linreg = {0};    // K value (with index->position in intermediate_results) computed using linear regression method
+    size_t N  = 0;
+    size_t N0 = 0;
+    KWithIndex KWI_corr  = {0};      // K value (with index->position in intermediate_results) computed using correlation method
+    KWithIndex KWI_linreg= {0};    // K value (with index->position in intermediate_results) computed using linear regression method
     const TimeSeries *ts_ptr;     // pointer to time series for which analysis was performed
     std::vector<AnalysisControlResult> intermediate_results;
 }; // struct AnalysisResult
